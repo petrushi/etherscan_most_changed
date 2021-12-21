@@ -43,7 +43,7 @@ async function getLastBlock(): Promise<string> {
   let lastBlock: string = "";
   let lastResult: string = "";
   let tries: number = 0;
-  while (!lastBlock && tries < 5) {
+  while (!lastBlock && tries < 10) {
     https
       .get(
         "https://api.etherscan.io/api?module=proxy&action=eth_blockNumber",
@@ -70,7 +70,7 @@ async function getLastBlock(): Promise<string> {
     await delay(1000);
   }
   if (!lastBlock) {
-    throw new Error(`Request failed 5 attempts, last result:${lastResult}`);
+    throw new Error(`Request failed 10 attempts, last result:${lastResult}`);
   }
   return lastBlock;
 }
