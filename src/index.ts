@@ -152,13 +152,13 @@ function startAPI(data: WalletChange[]) {
       return Math.abs(o.change);
     })
   );
-  var obj = data.find(function (o) {
+  const obj = data.find(function (o) {
     return Math.abs(o.change) == max;
   });
   const app = express();
   const port = process.env.PORT || 5000;
   app.get("/", (request, response) => {
-    response.send({ biggestChange: obj });
+    response.send({ biggestChange: obj || 'Not found'});
   });
   app.listen(port, () =>
     process.stdout.write(`Running on port ${port}\nhttp://localhost:5000/\n`)

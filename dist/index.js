@@ -180,7 +180,7 @@ function startAPI(data) {
     var app = express();
     var port = process.env.PORT || 5000;
     app.get("/", function (request, response) {
-        response.send({ biggestChange: obj });
+        response.send({ biggestChange: obj || 'Not found' });
     });
     app.listen(port, function () {
         return process.stdout.write("Running on port ".concat(port, "\nhttp://localhost:5000/\n"));
