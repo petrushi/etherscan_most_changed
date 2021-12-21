@@ -146,19 +146,19 @@ function groupDuplicates(data: WalletChange[]): WalletChange[] {
 }
 
 function startAPI(data: WalletChange[]) {
-  const max = Math.max.apply(
+  const maxValue = Math.max.apply(
     Math,
     data.map(function (o) {
       return Math.abs(o.change);
     })
   );
-  const obj = data.find(function (o) {
-    return Math.abs(o.change) == max;
+  const maxWallet = data.find(function (o) {
+    return Math.abs(o.change) == maxValue;
   });
   const app = express();
   const port = process.env.PORT || 5000;
   app.get("/", (request, response) => {
-    response.send({ biggestChange: obj || 'Not found'});
+    response.send({ biggestChange: maxWallet || "Not found" });
   });
   app.listen(port, () =>
     process.stdout.write(`Running on port ${port}\nhttp://localhost:5000/\n`)
@@ -198,9 +198,7 @@ function main() {
     loopThroughBlocks(lastBlockNum).then((blocks) => {
       process.stdout.write("Searching most changed...\n");
       blocks.forEach((block) => {
-        acrossBlocksTransactions = acrossBlocksTransactions.concat(
-          handleTransactions(block)
-        );
+        acrossBlocksTransactions.push(...handleTransactions(block));
       });
       startAPI(groupDuplicates(acrossBlocksTransactions));
     });
