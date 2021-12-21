@@ -1,4 +1,4 @@
-In file .env in root directory put KEY=your_key and PORT=your_port
+In file .env in root directory put KEY=your_key and PORT=your_port.
 Without .env working on port 5000 and slow because of etherscan's requests rate limit
 
 # build with yarn:
