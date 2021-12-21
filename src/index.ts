@@ -7,12 +7,6 @@ interface PromiseFulfilledResult<T> {
   status: "fulfilled";
   value: T;
 }
-
-interface PromiseRejectedResult {
-  status: "rejected";
-  reason: any;
-}
-
 interface Transaction {
   from: string;
   to: string;
@@ -94,9 +88,6 @@ async function getBlockInfo(blockID: string) {
           });
 
           resp.on("end", () => {
-            // if (JSON.parse(data).status) {
-            //   console.log(JSON.parse(data).result);
-            // }
             if (JSON.parse(data).result?.transactions) {
               // if transactions in response, I guess it's correct one
               APIResp = JSON.parse(data);
@@ -114,7 +105,7 @@ async function getBlockInfo(blockID: string) {
 }
 
 function handleTransactions(data: EtherResponse): WalletChange[] {
-  let changes: WalletChange[] = [];
+  const changes: WalletChange[] = [];
 
   let filteredTransactions: Transaction[] =
     data.result.transactions.filter(clearZeroValues);
@@ -145,31 +136,11 @@ function groupDuplicates(data: WalletChange[]): WalletChange[] {
   return result;
 }
 
-function startAPI(data: WalletChange[]) {
-  const maxValue = Math.max.apply(
-    Math,
-    data.map(function (o) {
-      return Math.abs(o.change);
-    })
-  );
-  const maxWallet = data.find(function (o) {
-    return Math.abs(o.change) == maxValue;
-  });
-  const app = express();
-  const port = process.env.PORT || 5000;
-  app.get("/", (request, response) => {
-    response.send({ biggestChange: maxWallet || "Not found" });
-  });
-  app.listen(port, () =>
-    process.stdout.write(`Running on port ${port}\nhttp://localhost:5000/\n`)
-  );
-}
-
 async function loopThroughBlocks(
   lastBlockNum: number,
   blocksAmount: number = 100
 ): Promise<EtherResponse[]> {
-  let promises: Promise<EtherResponse>[] = [];
+  const promises: Promise<EtherResponse>[] = [];
   process.stdout.write(`Getting ${blocksAmount} blocks...\n`);
   for (let i = lastBlockNum; i > lastBlockNum - blocksAmount; i--) {
     promises.push(getBlockInfo(i.toString(16)));
@@ -178,7 +149,7 @@ async function loopThroughBlocks(
 
   const resolvedPromises = await Promise.allSettled(promises);
   process.stdout.write("\n");
-  let blocks = await Promise.all(
+  const blocks = await Promise.all(
     resolvedPromises
       .filter(({ status }) => status === "fulfilled")
       .map((p) => (p as PromiseFulfilledResult<EtherResponse>).value)
@@ -188,19 +159,40 @@ async function loopThroughBlocks(
   return blocks;
 }
 
+function findMax(data: WalletChange[]): WalletChange | string {
+  let maxWallet: WalletChange | string = "Not found";
+  if (data.length > 0) {
+    maxWallet = data.reduce((prev, current) =>
+      Math.abs(prev.change) > Math.abs(current.change) ? prev : current
+    );
+  }
+  return maxWallet;
+}
+
+function startAPI(maxWallet: WalletChange | string): void {
+  const app = express();
+  const port = process.env.PORT || 5000;
+  app.get("/", (request, response) => {
+    response.send({ biggestChange: maxWallet });
+  });
+  app.listen(port, () =>
+    process.stdout.write(`Running on port ${port}\nhttp://localhost:${port}/\n`)
+  );
+}
+
 function main() {
   const lastBlockPromise: Promise<string> = getLastBlock();
   lastBlockPromise.then((lastBlock) => {
     process.stdout.write(`Found last block: ${lastBlock}\n`);
     const lastBlockNum: number = parseInt(lastBlock);
-    let acrossBlocksTransactions: WalletChange[] = [];
+    const acrossBlocksTransactions: WalletChange[] = [];
 
     loopThroughBlocks(lastBlockNum).then((blocks) => {
       process.stdout.write("Searching most changed...\n");
       blocks.forEach((block) => {
         acrossBlocksTransactions.push(...handleTransactions(block));
       });
-      startAPI(groupDuplicates(acrossBlocksTransactions));
+      startAPI(findMax(groupDuplicates(acrossBlocksTransactions)));
     });
   });
 }

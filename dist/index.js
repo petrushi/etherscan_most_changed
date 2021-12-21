@@ -68,7 +68,7 @@ function getLastBlock() {
                     tries = 0;
                     _a.label = 1;
                 case 1:
-                    if (!(!lastBlock && tries < 5)) return [3 /*break*/, 3];
+                    if (!(!lastBlock && tries < 10)) return [3 /*break*/, 3];
                     https
                         .get("https://api.etherscan.io/api?module=proxy&action=eth_blockNumber", function (resp) {
                         var data = "";
@@ -93,7 +93,7 @@ function getLastBlock() {
                     return [3 /*break*/, 1];
                 case 3:
                     if (!lastBlock) {
-                        throw new Error("Request failed 5 attempts, last result:".concat(lastResult));
+                        throw new Error("Request failed 10 attempts, last result:".concat(lastResult));
                     }
                     return [2 /*return*/, lastBlock];
             }
@@ -123,9 +123,6 @@ function getBlockInfo(blockID) {
                         });
                         resp.on("end", function () {
                             var _a;
-                            // if (JSON.parse(data).status) {
-                            //   console.log(JSON.parse(data).result);
-                            // }
                             if ((_a = JSON.parse(data).result) === null || _a === void 0 ? void 0 : _a.transactions) {
                                 // if transactions in response, I guess it's correct one
                                 APIResp = JSON.parse(data);
@@ -170,22 +167,6 @@ function groupDuplicates(data) {
     });
     return result;
 }
-function startAPI(data) {
-    var max = Math.max.apply(Math, data.map(function (o) {
-        return Math.abs(o.change);
-    }));
-    var obj = data.find(function (o) {
-        return Math.abs(o.change) == max;
-    });
-    var app = express();
-    var port = process.env.PORT || 5000;
-    app.get("/", function (request, response) {
-        response.send({ biggestChange: obj || 'Not found' });
-    });
-    app.listen(port, function () {
-        return process.stdout.write("Running on port ".concat(port, "\nhttp://localhost:5000/\n"));
-    });
-}
 function loopThroughBlocks(lastBlockNum, blocksAmount) {
     if (blocksAmount === void 0) { blocksAmount = 100; }
     return __awaiter(this, void 0, void 0, function () {
@@ -217,6 +198,25 @@ function loopThroughBlocks(lastBlockNum, blocksAmount) {
         });
     });
 }
+function findMax(data) {
+    var maxWallet = "Not found";
+    if (data.length > 0) {
+        maxWallet = data.reduce(function (prev, current) {
+            return Math.abs(prev.change) > Math.abs(current.change) ? prev : current;
+        });
+    }
+    return maxWallet;
+}
+function startAPI(maxWallet) {
+    var app = express();
+    var port = process.env.PORT || 5000;
+    app.get("/", function (request, response) {
+        response.send({ biggestChange: maxWallet });
+    });
+    app.listen(port, function () {
+        return process.stdout.write("Running on port ".concat(port, "\nhttp://localhost:").concat(port, "/\n"));
+    });
+}
 function main() {
     var lastBlockPromise = getLastBlock();
     lastBlockPromise.then(function (lastBlock) {
@@ -226,9 +226,9 @@ function main() {
         loopThroughBlocks(lastBlockNum).then(function (blocks) {
             process.stdout.write("Searching most changed...\n");
             blocks.forEach(function (block) {
-                acrossBlocksTransactions = acrossBlocksTransactions.concat(handleTransactions(block));
+                acrossBlocksTransactions.push.apply(acrossBlocksTransactions, handleTransactions(block));
             });
-            startAPI(groupDuplicates(acrossBlocksTransactions));
+            startAPI(findMax(groupDuplicates(acrossBlocksTransactions)));
         });
     });
 }
