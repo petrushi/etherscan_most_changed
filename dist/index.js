@@ -27,7 +27,7 @@ async function getLastBlock() {
                 data += chunk;
             });
             resp.on("end", () => {
-                lastResult = JSON.parse(data).result; // save last result to show in case of error
+                lastResult = JSON.parse(data).result;
                 if (!isNaN(JSON.parse(data).result)) {
                     // check if string not "Max rate limit reached...", but a number
                     lastBlock = JSON.parse(data).result;
@@ -65,9 +65,6 @@ async function getBlockInfo(blockID) {
                     APIResp = JSON.parse(data);
                 }
             });
-        })
-            .on("error", (_err) => {
-            //  process.stdout.write(`\nError from API: ${err.message} . Making requests still.\n`);
         });
         await delay(1000);
     }
