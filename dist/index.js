@@ -66,9 +66,10 @@ async function getBlockInfo(blockID) {
                 }
             });
         })
-            .on("error", (err) => {
-            console.log("\nError from API: " + err.message);
+            .on("error", (_err) => {
+            //  process.stdout.write(`\nError from API: ${err.message} . Making requests still.\n`);
         });
+        await delay(1000);
     }
     process.stdout.write("#");
     return APIResp;
@@ -93,7 +94,7 @@ function groupDuplicates(data) {
     const res = Array.from(data.reduce((m, { wallet, value }) => m.set(wallet, (m.get(wallet) || 0n) + value), new Map()), ([wallet, value]) => ({ wallet, value }));
     return res;
 }
-async function loopThroughBlocks(lastBlockNum, blocksAmount = 5) {
+async function loopThroughBlocks(lastBlockNum, blocksAmount = 100) {
     const promises = [];
     process.stdout.write(`Getting ${blocksAmount} blocks...\n`);
     for (let i = lastBlockNum; i > lastBlockNum - blocksAmount; i--) {
@@ -123,7 +124,7 @@ function findMax(data) {
 function startAPI(maxWallet) {
     const app = express();
     const port = process.env.PORT || 5000;
-    app.get("/", (request, response) => {
+    app.get("/", (_request, response) => {
         response.send({ biggestChange: maxWallet });
     });
     app.listen(port, () => process.stdout.write(`Running on port ${port}\nhttp://localhost:${port}/\n`));

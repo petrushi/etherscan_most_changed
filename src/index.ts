@@ -101,8 +101,8 @@ async function getBlockInfo(blockID: string) {
           });
         }
       )
-      .on("error", (err) => {
-        console.log(`\nError from API: ${err.message} . Making requests still.`);
+      .on("error", (_err) => {
+      //  process.stdout.write(`\nError from API: ${err.message} . Making requests still.\n`);
       });
     await delay(1000);
   }
@@ -181,7 +181,7 @@ function findMax(data: WalletChange[]): object {
 function startAPI(maxWallet: object | string): void {
   const app = express();
   const port = process.env.PORT || 5000;
-  app.get("/", (request, response) => {
+  app.get("/", (_request, response) => {
     response.send({ biggestChange: maxWallet });
   });
   app.listen(port, () =>
