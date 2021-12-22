@@ -102,7 +102,7 @@ async function getBlockInfo(blockID: string) {
         }
       )
       .on("error", (err) => {
-        console.log("Error from API: " + err.message);
+        console.log("\nError from API: " + err.message);
       });
     await delay(1000);
   }

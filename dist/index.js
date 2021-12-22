@@ -67,9 +67,8 @@ async function getBlockInfo(blockID) {
             });
         })
             .on("error", (err) => {
-            console.log("Error from API: " + err.message);
+            console.log("\nError from API: " + err.message);
         });
-        await delay(1000);
     }
     process.stdout.write("#");
     return APIResp;
@@ -94,7 +93,7 @@ function groupDuplicates(data) {
     const res = Array.from(data.reduce((m, { wallet, value }) => m.set(wallet, (m.get(wallet) || 0n) + value), new Map()), ([wallet, value]) => ({ wallet, value }));
     return res;
 }
-async function loopThroughBlocks(lastBlockNum, blocksAmount = 100) {
+async function loopThroughBlocks(lastBlockNum, blocksAmount = 5) {
     const promises = [];
     process.stdout.write(`Getting ${blocksAmount} blocks...\n`);
     for (let i = lastBlockNum; i > lastBlockNum - blocksAmount; i--) {
