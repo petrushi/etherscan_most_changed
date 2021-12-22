@@ -102,7 +102,7 @@ async function getBlockInfo(blockID: string) {
         }
       )
       .on("error", (_err) => {
-      //  process.stdout.write(`\nError from API: ${err.message} . Making requests still.\n`);
+        //  process.stdout.write(`\nError from API: ${err.message} . Making requests still.\n`);
       });
     await delay(1000);
   }
@@ -159,7 +159,7 @@ async function loopThroughBlocks(
       .filter(({ status }) => status === "fulfilled")
       .map((p) => (p as PromiseFulfilledResult<EtherResponse>).value)
   );
-  process.stdout.write(`Succcesed blocks: ${resolvedPromises.length}\n`);
+  process.stdout.write(`Succcesed blocks: ${blocks.length}\n`);
   return blocks;
 }
 
@@ -190,6 +190,10 @@ function startAPI(maxWallet: object | string): void {
 }
 
 function main() {
+  !process.env.KEY
+    ? console.log("KEY not found in .env")
+    : console.log("Found KEY in .env");
+
   const lastBlockPromise: Promise<string> = getLastBlock();
   lastBlockPromise.then((lastBlock) => {
     process.stdout.write(`Found last block: ${lastBlock}\n`);

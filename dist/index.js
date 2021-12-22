@@ -106,7 +106,7 @@ async function loopThroughBlocks(lastBlockNum, blocksAmount = 100) {
     const blocks = await Promise.all(resolvedPromises
         .filter(({ status }) => status === "fulfilled")
         .map((p) => p.value));
-    process.stdout.write(`Succcesed blocks: ${resolvedPromises.length}\n`);
+    process.stdout.write(`Succcesed blocks: ${blocks.length}\n`);
     return blocks;
 }
 function findMax(data) {
@@ -130,6 +130,9 @@ function startAPI(maxWallet) {
     app.listen(port, () => process.stdout.write(`Running on port ${port}\nhttp://localhost:${port}/\n`));
 }
 function main() {
+    !process.env.KEY
+        ? console.log("KEY not found in .env")
+        : console.log("Found KEY in .env");
     const lastBlockPromise = getLastBlock();
     lastBlockPromise.then((lastBlock) => {
         process.stdout.write(`Found last block: ${lastBlock}\n`);
