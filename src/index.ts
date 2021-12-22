@@ -1,6 +1,5 @@
 import * as express from "express";
 import * as https from "https";
-import * as lodash from "lodash";
 require("dotenv").config();
 
 interface PromiseFulfilledResult<T> {
@@ -22,15 +21,22 @@ interface EtherResponse {
 }
 interface WalletChange {
   wallet: string;
-  change: number;
+  value: bigint;
 }
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function absBigInt(value: bigint) {
+  if (value < 0n) {
+    return -value;
+  }
+  return value;
+}
+
 function clearZeroValues(transaction: Transaction): boolean {
-  return parseInt(transaction.value) != 0;
+  return BigInt(transaction.value) != 0n;
 }
 
 async function getLastBlock(): Promise<string> {
@@ -113,11 +119,11 @@ function handleTransactions(data: EtherResponse): WalletChange[] {
   filteredTransactions.forEach((transaction) => {
     let changePlus: WalletChange = {
       wallet: transaction.to,
-      change: parseInt(transaction.value),
+      value: BigInt(transaction.value),
     };
     let changeMin: WalletChange = {
       wallet: transaction.from,
-      change: -parseInt(transaction.value),
+      value: -BigInt(transaction.value),
     };
     changes.push(changePlus, changeMin);
   });
@@ -125,15 +131,14 @@ function handleTransactions(data: EtherResponse): WalletChange[] {
 }
 
 function groupDuplicates(data: WalletChange[]): WalletChange[] {
-  const unique = lodash.groupBy(data, (tr: WalletChange) => tr.wallet);
-  const result = Object.keys(unique).map((key) => {
-    const first = unique[key][0];
-    return {
-      ...first,
-      change: lodash.sumBy(unique[key], (tr: WalletChange) => tr.change),
-    };
-  });
-  return result;
+  const res = Array.from(
+    data.reduce(
+      (m, { wallet, value }) => m.set(wallet, (m.get(wallet) || 0n) + value),
+      new Map()
+    ),
+    ([wallet, value]) => ({ wallet, value })
+  );
+  return res;
 }
 
 async function loopThroughBlocks(
@@ -155,21 +160,25 @@ async function loopThroughBlocks(
       .map((p) => (p as PromiseFulfilledResult<EtherResponse>).value)
   );
   process.stdout.write(`Succcesed blocks: ${resolvedPromises.length}\n`);
-
   return blocks;
 }
 
-function findMax(data: WalletChange[]): WalletChange | string {
-  let maxWallet: WalletChange | string = "Not found";
+function findMax(data: WalletChange[]): object {
+  let stringifiedWallet: object = { error: "Not found" };
+  let maxWallet: WalletChange;
   if (data.length > 0) {
     maxWallet = data.reduce((prev, current) =>
-      Math.abs(prev.change) > Math.abs(current.change) ? prev : current
+      absBigInt(prev.value) > absBigInt(current.value) ? prev : current
     );
+    stringifiedWallet = {
+      ...maxWallet,
+      value: maxWallet.value.toString(16),
+    };
   }
-  return maxWallet;
+  return stringifiedWallet;
 }
 
-function startAPI(maxWallet: WalletChange | string): void {
+function startAPI(maxWallet: object | string): void {
   const app = express();
   const port = process.env.PORT || 5000;
   app.get("/", (request, response) => {
@@ -184,10 +193,9 @@ function main() {
   const lastBlockPromise: Promise<string> = getLastBlock();
   lastBlockPromise.then((lastBlock) => {
     process.stdout.write(`Found last block: ${lastBlock}\n`);
-    const lastBlockNum: number = parseInt(lastBlock);
     const acrossBlocksTransactions: WalletChange[] = [];
 
-    loopThroughBlocks(lastBlockNum).then((blocks) => {
+    loopThroughBlocks(parseInt(lastBlock)).then((blocks) => {
       process.stdout.write("Searching most changed...\n");
       blocks.forEach((block) => {
         acrossBlocksTransactions.push(...handleTransactions(block));
