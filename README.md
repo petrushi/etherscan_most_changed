@@ -22,7 +22,7 @@ yarn start
 ```
 API ендпоинт на http://localhost:5000/ или порте, указанном в .env
 
-========================
+****
 
 In file .env in root directory put KEY=your_key and PORT=your_port.
 Without .env working on port 5000 and slow because of etherscan's requests rate limit
