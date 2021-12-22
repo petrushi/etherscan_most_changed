@@ -102,7 +102,7 @@ async function getBlockInfo(blockID: string) {
         }
       )
       .on("error", (err) => {
-        console.log("\nError from API: " + err.message + "Keep making requests still.");
+        console.log(`\nError from API: ${err.message} . Making requests still.`);
       });
     await delay(1000);
   }
