@@ -48,4 +48,4 @@ Launch JS:
 ```sh
 yarn start
 ```
-API endpoint at http://localhost:5000/
+API endpoint at http://localhost:5000/ or port from .env
