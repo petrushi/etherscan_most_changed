@@ -2,19 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express = require("express");
 const https = require("https");
+const utils_1 = require("./utils");
 require("dotenv").config();
-function delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-function absBigInt(value) {
-    if (value < 0n) {
-        return -value;
-    }
-    return value;
-}
-function clearZeroValues(transaction) {
-    return BigInt(transaction.value) != 0n;
-}
 async function getLastBlock() {
     let lastBlock = "";
     let lastResult = "";
@@ -38,7 +27,7 @@ async function getLastBlock() {
             console.log("Error from API: " + err.message);
         });
         tries++;
-        await delay(1000);
+        await (0, utils_1.delay)(1000);
     }
     if (!lastBlock) {
         throw new Error(`Request failed 10 attempts, last result:${lastResult}`);
@@ -65,15 +54,16 @@ async function getBlockInfo(blockID) {
                     APIResp = JSON.parse(data);
                 }
             });
-        });
-        await delay(1000);
+        })
+            .on("error", (_err) => { });
+        await (0, utils_1.delay)(1000);
     }
     process.stdout.write("#");
     return APIResp;
 }
 function handleTransactions(data) {
     const changes = [];
-    let filteredTransactions = data.result.transactions.filter(clearZeroValues);
+    let filteredTransactions = data.result.transactions.filter(utils_1.clearZeroValues);
     filteredTransactions.forEach((transaction) => {
         let changePlus = {
             wallet: transaction.to,
@@ -110,7 +100,7 @@ function findMax(data) {
     let stringifiedWallet = { error: "Not found" };
     let maxWallet;
     if (data.length > 0) {
-        maxWallet = data.reduce((prev, current) => absBigInt(prev.value) > absBigInt(current.value) ? prev : current);
+        maxWallet = data.reduce((prev, current) => (0, utils_1.absBigInt)(prev.value) > (0, utils_1.absBigInt)(current.value) ? prev : current);
         stringifiedWallet = {
             ...maxWallet,
             value: maxWallet.value.toString(16),

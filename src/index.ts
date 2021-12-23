@@ -1,43 +1,14 @@
 import * as express from "express";
 import * as https from "https";
+import {
+  Transaction,
+  EtherResponse,
+  PromiseFulfilledResult,
+  WalletChange,
+} from "./interfaces";
+import { delay, clearZeroValues, absBigInt } from "./utils";
+
 require("dotenv").config();
-
-interface PromiseFulfilledResult<T> {
-  status: "fulfilled";
-  value: T;
-}
-interface Transaction {
-  from: string;
-  to: string;
-  value: string;
-}
-interface Result {
-  transactions: Transaction[];
-}
-interface EtherResponse {
-  status?: string;
-  error?: any;
-  result: Result;
-}
-interface WalletChange {
-  wallet: string;
-  value: bigint;
-}
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function absBigInt(value: bigint) {
-  if (value < 0n) {
-    return -value;
-  }
-  return value;
-}
-
-function clearZeroValues(transaction: Transaction): boolean {
-  return BigInt(transaction.value) != 0n;
-}
 
 async function getLastBlock(): Promise<string> {
   let lastBlock: string = "";
